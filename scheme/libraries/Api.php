@@ -163,7 +163,7 @@ class Api
         $this->_lava = lava_instance();
         $this->_lava->call->library('cache');
         $this->_lava->config->load('api');
-        $this->_lava->database();
+        $this->_lava->call->database();
 
         if (!config_item('api_helper_enabled')) {
             show_error('Api Helper is disabled or set up incorrectly.');
@@ -376,6 +376,7 @@ class Api
      */
     public function respond($data, $code = 200)
     {
+        header('Content-Type: application/json; charset=utf-8');
         http_response_code($code);
         echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         exit;
@@ -552,12 +553,12 @@ class Api
 
         if ($this->verify_user) {
             $stmt = $this->_lava->db->raw(
-                "SELECT id, role FROM {$this->users_table} WHERE id = ? LIMIT 1",
+                "SELECT id, role, is_active FROM {$this->users_table} WHERE id = ? LIMIT 1",
                 [$payload['sub']]
             );
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$user) {
+            if (!$user || !(bool) $user['is_active']) {
                 $this->respond_error('Unauthorized', 401);
             }
 

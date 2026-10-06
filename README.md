@@ -187,33 +187,53 @@ $config['base_url'] = 'http://localhost:3000/';
 
 ## Building a REST API
 
-LavaLust supports REST API development out of the box. Controllers can return JSON responses for API endpoints.
+The product API uses the LavaLust `api` library for JSON responses and JWT bearer-token authentication.
 
-```php
-<?php
+Register an account or log in to receive an access token:
 
-class Api extends Controller
-{
-    $this->call->library('api');
+```http
+POST /api/auth/register
+Content-Type: application/json
 
-    public function users()
-    {
-        $this->api->require_method('GET');
-        $auth = $this->api->require_jwt(); 
-
-        $this->call->model('User_model');
-        $users = $this->User_model->getAll();
-
-        $this->api->respond(['data' => $users]);
-    }
-}
+{"username":"admin","email":"admin@example.com","password":"Admin123"}
 ```
 
-Route definition:
+Replace the example email and password with your own values; the password must be at least 8 characters. Public registration always creates a regular user, even if the username is `admin`. An authenticated administrator can create a user or another administrator with `POST /api/users` using the same fields and an optional `role` of `user` or `admin`. To bootstrap the first administrator, promote a trusted existing account directly in the database; after that, administrators can create other accounts through the API.
 
-```php
-$router->get('/api/users', 'Api::users');
+Log in with the account's `username` and `password`:
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{"username":"admin","password":"your-password"}
 ```
+
+Send the returned access token as `Authorization: Bearer <access_token>` when calling product endpoints. All product operations, including reads, require authentication:
+
+| Method | Endpoint | Operation |
+| --- | --- | --- |
+| GET | `/api/products` | List products |
+| GET | `/api/products/{id}` | Show one product |
+| POST | `/api/products` | Create a product |
+| PUT or PATCH | `/api/products/{id}` | Update a product |
+| DELETE | `/api/products/{id}` | Delete a product |
+
+Product create/update JSON fields are `name`, `description`, `price`, and `stock`. `PATCH` accepts only the fields being changed. The `products` table is created by migration `003_create_products_table.php`.
+
+The API secrets `JWT_SECRET` and `REFRESH_TOKEN_KEY` must be set in the ignored `.env` file. Generate missing keys with `php lava jwt:generate`; keep `.env` out of version control.
+
+### React account portal
+
+The React account portal is in `frontend/`. Start the LavaLust API from the repository root with `php lava serve`, then in another terminal run:
+
+```sh
+cd frontend
+npm install
+npm run dev
+```
+
+Open the Vite URL printed in the terminal. During development, Vite proxies `/api` requests to `http://127.0.0.1:3000`; set `VITE_DEV_API_PROXY` if your LavaLust server uses a different URL. For a separately hosted frontend, copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_BASE_URL`. Public registration creates regular users. To see the account administration form, sign in with an account whose database role is `admin`.
 
 ---
 
