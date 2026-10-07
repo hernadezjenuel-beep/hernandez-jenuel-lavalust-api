@@ -233,7 +233,7 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL printed in the terminal. During development, Vite proxies `/api` requests to `http://127.0.0.1:3000`; set `VITE_DEV_API_PROXY` if your LavaLust server uses a different URL. For a separately hosted frontend, copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_BASE_URL`. Public registration creates regular users. To see the account administration form, sign in with an account whose database role is `admin`.
+Open the Vite URL printed in the terminal. During development, Vite proxies `/api` requests to `http://127.0.0.1:3000`; set `VITE_DEV_API_PROXY` if your LavaLust server uses a different URL. The API base URL used by React is set in `frontend/src/App.jsx`; update `API_BASE_URL` there if the backend address changes. Public registration creates regular users. To see the account administration form, sign in with an account whose database role is `admin`.
 
 ---
 
